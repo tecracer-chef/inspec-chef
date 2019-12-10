@@ -5,9 +5,9 @@ require "uri"
 module InspecPlugins::Chef
   class Input < Inspec.plugin(2, :input)
     VALID_PATTERNS = [
-      Regexp.new('^databag://[^/]+/[^/]+/.+$'),
-      Regexp.new('^node://[^/]+/attributes/.+$')
-    ]
+      Regexp.new("^databag://[^/]+/[^/]+/.+$"),
+      Regexp.new("^node://[^/]+/attributes/.+$"),
+    ].freeze
 
     attr_reader :plugin_conf, :chef_endpoint, :chef_client, :chef_api_key
     attr_reader :chef_api
@@ -36,10 +36,10 @@ module InspecPlugins::Chef
       if input[:type] == :databag
         data = get_databag_item(input[:object], input[:item])
       elsif input[:type] == :node
-        data = get_attributes(input[:object]) if input[:item] == 'attributes'
+        data = get_attributes(input[:object]) if input[:item] == "attributes"
       end
 
-      JMESPath.search(input[:query].join('.'), data)
+      JMESPath.search(input[:query].join("."), data)
     end
 
     private
@@ -90,13 +90,13 @@ module InspecPlugins::Chef
     # Parse InSpec input name into Databag, Item and search query
     def parse_input(input_uri)
       uri = URI(input_uri)
-      item, *components = uri.path.slice(1..-1).split('/')
+      item, *components = uri.path.slice(1..-1).split("/")
 
       {
         type: uri.scheme.to_sym,
         object: uri.host,
         item: item,
-        query: components
+        query: components,
       }
     end
   end

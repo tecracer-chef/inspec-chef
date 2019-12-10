@@ -56,7 +56,7 @@ This plugin supports the following options:
 When this plugin is loaded, you can use databag items as inputs:
 
 ```ruby
-hostname = input('databag://databagname/item#JMESPath.Search.Query')
+hostname = input('databag://name/item/some/nested/value')
 
 describe host(hostname, port: 80, protocol: 'tcp') do
   it { should be_reachable }
@@ -66,7 +66,7 @@ end
 In the same way, you can also add attributes of arbitary nodes:
 
 ```ruby
-hostname = input('node://nodename/attribute#JMESPath.Search.Query')
+hostname = input('node://name/attributes/some/nested/attribute')
 
 describe host(hostname, port: 80, protocol: 'tcp') do
   it { should be_reachable }
@@ -82,7 +82,7 @@ is __not__ done on the clients tested, but the executing workstation.
 ## Example
 
 With this plugin, the input names consist of the name of the databag,
-the item and a JMESPath query for getting a specific value within an item.
+the item and a path getting a specific value within an item.
 This way, you can have a databag "configuration" with an item "database" like:
 
 ```json
@@ -93,4 +93,10 @@ This way, you can have a databag "configuration" with an item "database" like:
 }
 ```
 
-and then use `input('databag://configuration/database#SQL.Type')` to get the "SQL2019" value out.
+and then use `input('databag://configuration/database/SQL/Type')` to get the
+"SQL2019" value out.
+
+## Limitations
+
+There currently is no support for arrays or more complex expressions within
+the query, but support via JMESPath expressions is planned.
