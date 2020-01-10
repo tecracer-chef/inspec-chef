@@ -37,5 +37,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "chef-api", "~> 0.10"
   spec.add_dependency "jmespath", "~> 1.4"
 
-  spec.add_development_dependency "bump", "~0.8"
+  spec.add_development_dependency "bump", "~> 0.8"
 end
