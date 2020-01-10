@@ -1,6 +1,7 @@
 #------------------------------------------------------------------#
 #                    Code Style Tasks
 #------------------------------------------------------------------#
+require "bump/tasks"
 require "chefstyle"
 require "rubocop/rake_task"
 require "rspec/core/rake_task"
