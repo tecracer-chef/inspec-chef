@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
   spec.version       = InspecPlugins::Chef::VERSION
   spec.authors       = ["Thomas Heinen"]
   spec.email         = ["theinen@tecracer.de"]
-  spec.summary       = "Use Chef Server data in your InSpec profiles"
+  spec.summary       = "InSpec input plugin to access Chef Infra Server databags and attributes."
   spec.description   = "This plugin allows InSpec 'inputs' to be provided by Chef Server."
   spec.homepage      = "https://github.com/tecracer-theinen/inspec-chef"
   spec.license       = "Apache-2.0"

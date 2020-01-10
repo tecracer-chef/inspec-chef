@@ -21,7 +21,7 @@ the plugin from RubyGems and install/register it with InSpec.
 
 You can verify successful installation via `inspec plugin list`
 
-## Configuration
+## Configuration for Chef Infra Server
 
 Each plugin option may be set either as an environment variable, or as a plugin
 option in your Chef InSpec configuration file at ~/.inspec/config.json. For
@@ -50,6 +50,28 @@ This plugin supports the following options:
 | INSPEC_CHEF_ENDPOINT | chef_api_endpoint | The URL of your Chef server, including the organization |
 | INSPEC_CHEF_CLIENT   | chef_api_client   | The name of the client of the Chef server to connect as |
 | INSPEC_CHEF_KEY      | chef_api_key      | Path to the private certificate identifying the node |
+
+## Configuration for TestKitchen
+
+To allow dev/prod parity, this input plugin detects if it is called from within
+TestKitchen. As these tests should not access the Chef Server (to provide the
+needed test data instead of live data), it will then revert on using the
+`data_bags_path` and `attributes` from kitchen's `provisioner` section:
+
+```yaml
+suites:
+  - name: default
+    verifier:
+      load_plugins: true
+    data_bags_path: "test/integration/data_bags"
+    attributes:
+      java:
+        install_flavor: "oracle"
+```
+
+Please note, that support for `load_plugins` is not available on versions 1.3.1
+and below of the `kitchen-inspec` verifier plugin. Please check
+[kitchen-inspec PR #247 on GitHub](https://github.com/inspec/kitchen-inspec/pull/247) for finding official versions supporting this feature.
 
 ## Usage
 
