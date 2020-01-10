@@ -16,15 +16,17 @@ module InspecPlugins::Chef
     def initialize
       @plugin_conf = Inspec::Config.cached.fetch_plugin_config("inspec-chef")
 
-      @chef_endpoint = fetch_plugin_setting("endpoint")
-      @chef_client   = fetch_plugin_setting("client")
-      @chef_api_key  = fetch_plugin_setting("key")
+      unless Inspec::Config.cached.final_options.logger.is_a?(Kitchen::Logger)
+        @chef_endpoint = fetch_plugin_setting("endpoint")
+        @chef_client   = fetch_plugin_setting("client")
+        @chef_api_key  = fetch_plugin_setting("key")
 
-      if chef_endpoint.nil? || chef_client.nil? || chef_api_key.nil?
-        raise "ERROR: Need configuration of chef endpoint, client name and api key."
+        if chef_endpoint.nil? || chef_client.nil? || chef_api_key.nil?
+          raise "ERROR: Need configuration of chef endpoint, client name and api key."
+        end
+
+        connect_to_chef_server
       end
-
-      connect_to_chef_server
     end
 
     # Fetch method used for Input plugins
@@ -44,6 +46,19 @@ module InspecPlugins::Chef
 
     private
 
+    # Check if this is called from within TestKitchen
+    def inside_testkitchen?
+      !! defined?(::Kitchen::Logger)
+    end
+
+    # Reach for Kitchen data and return its evaluated config
+    def kitchen_provisioner_config
+      require 'binding_of_caller'
+      kitchen = binding.callers.find { |b| b.frame_description == 'verify' }.receiver
+
+      kitchen.provisioner.send(:provided_config)
+    end
+
     # Get plugin setting via environment, config file or default
     def fetch_plugin_setting(setting_name, default = nil)
       env_var_name = "INSPEC_CHEF_#{setting_name.upcase}"
@@ -62,14 +77,33 @@ module InspecPlugins::Chef
 
     # Retrieve a Databag item from Chef Server
     def get_databag_item(databag, item)
-      chef_api.data_bag_item.fetch(item, bag: databag).data
+      unless inside_testkitchen?
+        unless chef_api.data_bags.any? { |k| k.name == databag }
+          raise format('Databag "%s" not found on Chef Infra Server', databag)
+        end
+
+        chef_api.data_bag_item.fetch(item, bag: databag).data
+      else
+        config = kitchen_provisioner_config
+        filename = File.join(config[:data_bags_path], databag, item + '.json')
+
+        begin
+          contents = JSON.load(File.read(filename))
+        rescue
+          raise format('Error accessing databag file %s, check TestKitchen configuration', filename)
+        end
+      end
     end
 
     # Retrieve attributes of a node
     def get_attributes(node)
-      data = get_search(:node, "name:#{node}")
+      unless inside_testkitchen?
+        data = get_search(:node, "name:#{node}")
 
-      merge_attributes(data)
+        merge_attributes(data)
+      else
+        kitchen_provisioner_config[:attributes]
+      end
     end
 
     # Low-level Chef search expression
