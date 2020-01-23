@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.3.0
+
+- Add support for dynamic node lookup
+- Improve README.md
+- Fix bug when running outside of TestKitchen
+- Fix style
+
 ## v0.2.0
 
 - Add support for running versus TestKitchen (PR #1)
