@@ -53,10 +53,10 @@ This plugin supports the following options:
 
 ## Configuration for TestKitchen
 
-To allow dev/prod parity, this input plugin detects if it is called from within
-TestKitchen. As these tests should not access the Chef Server (to provide the
-needed test data instead of live data), it will then revert on using the
-`data_bags_path` and `attributes` from kitchen's `provisioner` section:
+To allow for more dev/prod parity, this input plugin detects if it is called
+from within TestKitchen. As these tests should not access the Chef Server (to
+provide the needed test data instead of live data), it will then revert on using
+the `data_bags_path` and `attributes` from kitchen's `provisioner` section:
 
 ```yaml
 suites:
@@ -78,34 +78,32 @@ and below of the `kitchen-inspec` verifier plugin. Please check
 When this plugin is loaded, you can use databag items as inputs:
 
 ```ruby
-hostname = input('databag://name/item/some/nested/value')
+hostname = input('databag://databag_name/item/some/nested/value')
 
 describe host(hostname, port: 80, protocol: 'tcp') do
   it { should be_reachable }
 end
 ```
 
-In the same way, you can also add attributes of arbitary nodes:
+In the same way, you can also add attributes of arbitrary nodes:
 
 ```ruby
-hostname = input('node://name/attributes/some/nested/attribute')
+hostname = input('node://node_name/attributes/some/nested/attribute')
 
 describe host(hostname, port: 80, protocol: 'tcp') do
   it { should be_reachable }
 end
 ```
 
-InSpec will go through all loaded input plugins by priority and determine the value.
+It is possible to skip the node name, in which case the plugin will try to look up
+the Chef client name of the node being scanned. This will, depending on the address
+passed to InSpec, check via `ipaddress:`, `hostname:` or `fqdn:` queries. If this
+fails, another lookup will be tried for Amazon EC2 via `ec2_public_ipv4` and
+`ec2_public_hostname`.
 
-Keep in mind, that the node executing your InSpec runs needs to be
-registered with the chef server to be able to access the data. Lookup
-is __not__ done on the clients tested, but the executing workstation.
+## Databags Example
 
-## Example
-
-With this plugin, the input names consist of the name of the databag,
-the item and a path getting a specific value within an item.
-This way, you can have a databag "configuration" with an item "database" like:
+If you have a databag "configuration" with an item "database" like:
 
 ```json
 {
@@ -115,10 +113,20 @@ This way, you can have a databag "configuration" with an item "database" like:
 }
 ```
 
-and then use `input('databag://configuration/database/SQL/Type')` to get the
-"SQL2019" value out.
+you can use `input('databag://configuration/database/SQL/Type')` to get the
+"SQL2019" value.
+
+### Important Note
+
+Keep in mind, that the node executing your InSpec runs needs to be
+registered with the Chef Infra Server to be able to access the data. Lookup
+is __not__ done on the clients tested, but the workstation executing InSpec.
 
 ## Limitations
 
-There currently is no support for arrays or more complex expressions within
-the query, but support via JMESPath expressions is planned.
+- There currently is no support for arrays or more complex expressions within
+  the query, but support via JMESPath expressions is planned.
+- Automatic Chef node name lookup will fail for addresses not searchable in the
+  `ipaddress`, `hostname` or `fqdn` fields. One case would be IPv6 target
+  nodes. Trying to resolve will result in error "Unable too lookup remote Chef
+  client name"
