@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.3.1
+
+- Fix error message on installing, but not using the plugin
+- Fix GitHub link
+
 ## v0.3.0
 
 - Add support for dynamic node lookup

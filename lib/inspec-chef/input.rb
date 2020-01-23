@@ -16,26 +16,15 @@ module InspecPlugins::Chef
     # Set up new class
     def initialize
       @plugin_conf = Inspec::Config.cached.fetch_plugin_config("inspec-chef")
-
-      unless defined?(Kitchen)
-        @chef_endpoint = fetch_plugin_setting("endpoint")
-        @chef_client   = fetch_plugin_setting("client")
-        @chef_api_key  = fetch_plugin_setting("key")
-
-        if chef_endpoint.nil? || chef_client.nil? || chef_api_key.nil?
-          raise "ERROR: Need configuration of chef endpoint, client name and api key."
-        end
-
-        connect_to_chef_server
-      end
     end
 
     # Fetch method used for Input plugins
     def fetch(_profile_name, input_uri)
       return nil unless valid_plugin_input? input_uri
 
-      input = parse_input(input_uri)
+      connect_to_chef_server
 
+      input = parse_input(input_uri)
       if input[:type] == :databag
         data = get_databag_item(input[:object], input[:item])
       elsif input[:type] == :node
@@ -92,13 +81,33 @@ module InspecPlugins::Chef
 
     # Establish a Chef Server connection
     def connect_to_chef_server
-      @chef_api ||= ChefAPI::Connection.new(
-        endpoint: chef_endpoint,
-        client:   chef_client,
-        key:      chef_api_key
-      )
+      # From within TestKitchen we need no Chef Server connection
+      if defined?(Kitchen)
+        Inspec::Log.info "Running from TestKitchen, using provisioner settings instead of Chef Server"
 
-      Inspec::Log.debug format("Connected to %s as client %s", chef_endpoint, chef_client)
+      # Only connect once
+      elsif !connected?
+        @chef_endpoint = fetch_plugin_setting("endpoint")
+        @chef_client   = fetch_plugin_setting("client")
+        @chef_api_key  = fetch_plugin_setting("key")
+
+        if chef_endpoint.nil? || chef_client.nil? || chef_api_key.nil?
+          raise "ERROR: Plugin inspec-chef needs configuration of chef endpoint, client name and api key."
+        end
+
+        @chef_api ||= ChefAPI::Connection.new(
+          endpoint: chef_endpoint,
+          client:   chef_client,
+          key:      chef_api_key
+        )
+
+        Inspec::Log.debug format("Connected to %s as client %s", chef_endpoint, chef_client)
+      end
+    end
+
+    # Return if connection is established
+    def connected?
+      ! @chef_api.nil?
     end
 
     # Retrieve a Databag item from Chef Server

@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["theinen@tecracer.de"]
   spec.summary       = "InSpec input plugin to access Chef Infra Server databags and attributes."
   spec.description   = "This plugin allows InSpec 'inputs' to be provided by Chef Server."
-  spec.homepage      = "https://github.com/tecracer-theinen/inspec-chef"
+  spec.homepage      = "https://github.com/sgre-chef/inspec-chef"
   spec.license       = "Apache-2.0"
 
   # Though complicated-looking, this is pretty standard for a gemspec.
