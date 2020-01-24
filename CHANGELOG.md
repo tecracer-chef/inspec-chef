@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Refactorings
 - Add tests
 
 ## v0.3.1

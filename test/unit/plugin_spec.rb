@@ -11,15 +11,15 @@ module InspecChefUnitTests
     end
 
     def test_it_should_be_registered
-      assert(@registry.known_plugin?(@plugin_name))
+      assert @registry.known_plugin?(@plugin_name)
     end
 
     def test_it_should_be_an_api_v2_plugin
-      assert_equal(2, @status.api_generation)
+      assert_equal 2, @status.api_generation
     end
 
     def test_it_should_include_a_input_activator_hook
-      assert_includes(@status.plugin_types, :input)
+      assert_includes @status.plugin_types, :input
     end
   end
 end
