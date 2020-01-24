@@ -8,6 +8,7 @@ module ChefUnitTests
 
     def setup
       @plugin = InspecPlugins::Chef::Input.new
+
       InspecPlugins::Chef::Input.send(:public, *plugin.private_methods)
     end
 
@@ -19,7 +20,7 @@ module ChefUnitTests
     end
 
     def test_it_should_recognize_testkitchen
-      Kernel.const_set 'Kitchen', Class.new
+      Kernel.const_set "Kitchen", Class.new
 
       assert_equal true, plugin.inside_testkitchen?
     end

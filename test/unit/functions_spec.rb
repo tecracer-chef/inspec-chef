@@ -5,7 +5,7 @@ require "inspec-chef/input"
 module ChefUnitTests
   class Functions < Minitest::Test
     attr_reader :plugin
-    
+
     def setup
       @plugin = InspecPlugins::Chef::Input.new
       InspecPlugins::Chef::Input.send(:public, *plugin.private_methods)
