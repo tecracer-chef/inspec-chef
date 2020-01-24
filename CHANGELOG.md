@@ -1,8 +1,7 @@
 # Changelog
 
-## Unreleased
+## v0.3.2
 
-- Refactorings
 - Add tests
 
 ## v0.3.1

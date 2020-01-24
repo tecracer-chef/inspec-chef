@@ -27,61 +27,11 @@ module InspecPlugins
       end
 
       # ========================================================================
-      # Static Methods
-
-      class << Input
-        # Check if this is called from within TestKitchen
-        def inside_testkitchen?
-          !! defined?(::Kitchen::Logger)
-        end
-
-        # Check if this is an IP
-        def ip?(ip_or_name)
-          # Get address always returns an IP, so if nothing changes this was one
-          Resolv.getaddress(ip_or_name) == ip_or_name
-        rescue Resolv::ResolvError
-          false
-        end
-
-        # Check if this is an FQDN
-        def fqdn?(ip_or_name)
-          # If it is not an IP but contains a Dot, it is an FQDN
-          !ip?(ip_or_name) && ip_or_name.include?(".")
-        end
-
-        # Merge attributes in hierarchy like Chef
-        def merge_attributes(data)
-          data.fetch("default", {})
-            .merge(data.fetch("normal", {}))
-            .merge(data.fetch("override", {}))
-            .merge(data.fetch("automatic", {}))
-        end
-
-        # Verify if input is valid for this plugin
-        def valid_plugin_input?(input)
-          VALID_PATTERNS.any? { |regex| regex.match? input }
-        end
-
-        # Parse InSpec input name into Databag, Item and search query
-        def parse_input(input_uri)
-          uri = URI(input_uri)
-          item, *components = uri.path.slice(1..-1).split("/")
-
-          {
-            type: uri.scheme.to_sym,
-            object: uri.host,
-            item: item,
-            query: components,
-          }
-        end
-      end
-
-      # ========================================================================
       # Input Plugin API
 
       # Fetch method used for Input plugins
       def fetch(_profile_name, input_uri)
-        return nil unless valid_plugin_input? input_uri
+        return nil unless valid_plugin_input?(input_uri)
 
         connect_to_chef_server
 
@@ -102,6 +52,57 @@ module InspecPlugins
       end
 
       private
+
+      # ========================================================================
+      # Helper Methods
+
+      # Check if this is called from within TestKitchen
+      def inside_testkitchen?
+        !! defined?(::Kitchen)
+      end
+
+      # Check if this is an IP
+      def ip?(ip_or_name)
+        # Get address always returns an IP, so if nothing changes this was one
+        Resolv.getaddress(ip_or_name) == ip_or_name
+      rescue Resolv::ResolvError
+        false
+      end
+
+      # Check if this is an FQDN
+      def fqdn?(ip_or_name)
+        # If it is not an IP but contains a Dot, it is an FQDN
+        !ip?(ip_or_name) && ip_or_name.include?(".")
+      end
+
+      # Merge attributes in hierarchy like Chef
+      def merge_attributes(data)
+        data.fetch("default", {})
+          .merge(data.fetch("normal", {}))
+          .merge(data.fetch("override", {}))
+          .merge(data.fetch("automatic", {}))
+      end
+
+      # Verify if input is valid for this plugin
+      def valid_plugin_input?(input)
+        VALID_PATTERNS.any? { |regex| regex.match? input }
+      end
+
+      # Parse InSpec input name into Databag, Item and search query
+      def parse_input(input_uri)
+        uri = URI(input_uri)
+        item, *components = uri.path.slice(1..-1).split("/")
+
+        {
+          type: uri.scheme.to_sym,
+          object: uri.host,
+          item: item,
+          query: components,
+        }
+      end
+
+      # ========================================================================
+      # Interfacing with Inspec and Chef
 
       # Reach for Kitchen data and return its evaluated config
       # @todo DI
@@ -164,6 +165,11 @@ module InspecPlugins
         ! chef_server.nil?
       end
 
+      # Low-level Chef search expression
+      def get_search(index, expression)
+        chef_server.search.query(index, expression, rows: 1).rows.first
+      end
+
       # Retrieve a Databag item from Chef Server
       def get_databag_item(databag, item)
         unless inside_testkitchen?
@@ -213,11 +219,6 @@ module InspecPlugins
         # This will fail for cases like trying to connect to IPv6, so it will need extension in the future
 
         result&.fetch("name") || raise(format("Unable too lookup remote Chef client name from %s", ip_or_name))
-      end
-
-      # Low-level Chef search expression
-      def get_search(index, expression)
-        chef_server.search.query(index, expression, rows: 1).rows.first
       end
     end
   end
