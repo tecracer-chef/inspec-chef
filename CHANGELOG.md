@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.2
+
+- Add tests
+
 ## v0.3.1
 
 - Fix error message on installing, but not using the plugin
