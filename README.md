@@ -51,6 +51,11 @@ This plugin supports the following options:
 | INSPEC_CHEF_CLIENT   | chef_api_client   | The name of the client of the Chef server to connect as |
 | INSPEC_CHEF_KEY      | chef_api_key      | Path to the private certificate identifying the node |
 
+Using this plugin with Windows instances is broken with `chef-api` versions up to 0.10.4 due
+to a dependency issue within the deprecated `logify` gem. Versions starting with 0.10.5 use Chef's
+native logging system and work on both Linux and Windows. Other versions will only work with Linux
+instances.
+
 ## Configuration for TestKitchen
 
 To allow for more dev/prod parity, this input plugin detects if it is called
@@ -69,9 +74,8 @@ suites:
         install_flavor: "oracle"
 ```
 
-Please note, that support for `load_plugins` is not available on versions 1.3.1
-and below of the `kitchen-inspec` verifier plugin. Please check
-[kitchen-inspec PR #247 on GitHub](https://github.com/inspec/kitchen-inspec/pull/247) for finding official versions supporting this feature.
+Please note, that support for `load_plugins` was introduced in version 1.3.2 of
+the `kitchen-inspec` verifier plugin. Earlier versions are unable to load InSpec V2 plugins.
 
 ## Usage
 
@@ -130,3 +134,6 @@ is __not__ done on the clients tested, but the workstation executing InSpec.
   `ipaddress`, `hostname` or `fqdn` fields. One case would be IPv6 target
   nodes. Trying to resolve will result in error "Unable too lookup remote Chef
   client name"
+- Using TestKitchen to run InSpec from a Chef cookbook on a remote machine will
+  fail. As InSpec is not invoked as a verifier from within Kitchen, but as a
+  standalone binary, it cannot access the passed kitchen attributes and databags.
