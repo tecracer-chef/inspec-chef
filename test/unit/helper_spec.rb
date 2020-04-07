@@ -16,6 +16,8 @@ module ChefUnitTests
     # inside_testkitchen?
 
     def test_it_should_recognize_manual_invocation
+      Kernel.send(:remove_const, :Kitchen)
+
       assert_equal false, plugin.inside_testkitchen?
     end
 
@@ -183,5 +185,8 @@ module ChefUnitTests
         plugin.parse_input("databag://name/item-name/some/sub/key")
       )
     end
+
+    ############################################################################
+    # stringify (TODO)
   end
 end

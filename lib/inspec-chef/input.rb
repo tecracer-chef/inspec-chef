@@ -1,5 +1,6 @@
 require "chef-api"
 require "jmespath"
+require "json"
 require "resolv"
 require "uri"
 
@@ -31,7 +32,10 @@ module InspecPlugins
 
       # Fetch method used for Input plugins
       def fetch(_profile_name, input_uri)
+        logger.trace format("Inspec-Chef received query for input %<uri>s", uri: input_uri)
         return nil unless valid_plugin_input?(input_uri)
+
+        logger.debug format("Inspec-Chef input schema detected")
 
         connect_to_chef_server
 
@@ -40,15 +44,18 @@ module InspecPlugins
           data = get_databag_item(input[:object], input[:item])
         elsif input[:type] == :node && input[:item] == "attributes"
           # Search Chef node name, if no host given explicitly
-          input[:object] = get_clientname(scan_target) unless input[:object]
+          input[:object] = get_clientname(scan_target) unless input[:object] || inside_testkitchen?
 
           data = get_attributes(input[:object])
         end
 
-        result = JMESPath.search(input[:query].join("."), data)
+        # Quote components to allow "-" as part of search query.
+        # @see https://github.com/jmespath/jmespath.rb/issues/12
+        expression = input[:query].map { |component| '"' + component + '"' }.join(".")
+        result = JMESPath.search(expression, data)
         raise format("Could not resolve value for %s, check if databag/item or attribute exist", input_uri) unless result
 
-        result
+        stringify(result)
       end
 
       private
@@ -99,6 +106,11 @@ module InspecPlugins
           item: item,
           query: components,
         }
+      end
+
+      # Deeply stringify keys of Array/Hash
+      def stringify(result)
+        JSON.parse(JSON.dump(result))
       end
 
       # ========================================================================
