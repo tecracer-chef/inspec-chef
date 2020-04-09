@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.3.4
+
+- Fix handling if data_bags_path is unset
+- Fix lookup of data_bags to support `suites`, `provisioner` and `verifier` level
+
 ## v0.3.3
 
 - Fix nested responses to allow access by String/Symbol

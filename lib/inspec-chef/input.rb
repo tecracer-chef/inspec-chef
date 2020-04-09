@@ -115,14 +115,22 @@ module InspecPlugins
 
       # ========================================================================
       # Interfacing with Inspec and Chef
+      #
 
-      # Reach for Kitchen data and return its evaluated config
-      # @todo DI
-      def kitchen_provisioner_config
+      # Access to kitchen data
+      def kitchen
         require "binding_of_caller"
-        kitchen = binding.callers.find { |b| b.frame_description == "verify" }.receiver
+        binding.callers.find { |b| b.frame_description == "verify" }.receiver
+      end
 
+      # Return provisioner config
+      def kitchen_provisioner_config
         kitchen.provisioner.send(:provided_config)
+      end
+
+      # Return verifier config
+      def kitchen_verifier_config
+        kitchen.verifier.send(:provided_config)
       end
 
       # Get plugin specific configuration
@@ -147,7 +155,7 @@ module InspecPlugins
       def connect_to_chef_server
         # From within TestKitchen we need no Chef Server connection
         if inside_testkitchen?
-          logger.info "Running from TestKitchen, using provisioner settings instead of Chef Server"
+          logger.info "Running from TestKitchen, using static settings instead of Chef Server"
 
         # Only connect once
         elsif !server_connected?
@@ -191,8 +199,7 @@ module InspecPlugins
 
           chef_server.data_bag_item.fetch(item, bag: databag).data
         else
-          config = kitchen_provisioner_config
-          filename = File.join(config[:data_bags_path], databag, item + ".json")
+          filename = File.join(data_bags_path, databag, item + ".json")
 
           begin
             return JSON.load(File.read(filename))
@@ -200,6 +207,12 @@ module InspecPlugins
             raise format("Error accessing databag file %s, check TestKitchen configuration", filename)
           end
         end
+      end
+
+      # Calculate lookup path for databags within TestKitchen
+      def data_bags_path
+	# These can occur on suite-level, provisioner-level, verifier or at the default location
+        kitchen_provisioner_config[:data_bags_path] || kitchen_verifier_config[:data_bags_path] || File.join('test', 'data_bags')
       end
 
       # Retrieve attributes of a node
